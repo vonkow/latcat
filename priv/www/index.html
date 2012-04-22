@@ -1,13 +1,21 @@
 <html>
 <head>
-<title>It Worked</title>
+<title>LatCat | Leave a Note | Read a Note | Delete a Note</title>
 <style>
 #navbar {
-	height: 2em;
+    padding: 5px;
 	/*position: fixed;*/
 	width: 100%;
 	background-color:black;
 	color: white;
+}
+h1 {
+    font-size: 18pt;
+    font-family: sans;
+}
+h1 {
+    font-size: 16pt;
+    font-family: sans;
 }
 #map {
 	margin-top: 2em;
@@ -32,8 +40,11 @@
 </head>
 <body>
 <div id="navbar">
-	<form id="notify" action="/add" method="POST" style="display:inline;">
+    <h1 style="display:inline;">LatCat |&nbsp;</h1>
+    <h2 style="display:inline;">Leave, Read or Delete a Note</h2>
+	<form id="notify" action="/add" method="POST" style="display:inline;float:right;">
 		<input id="text" name="text" type="text">
+        <input type="submit" value="Notify">
 	</form>
 </div>
 <div id="main">
@@ -51,16 +62,21 @@ $(function() {
 	function init(lat, lon) {
 		if (console) console.log("lat: "+lat+" lon: "+lon);
 		map = new OpenLayers.Map('map', {
-			zoom: 5,
+			zoom: 12,
 			layers: [
-				new OpenLayers.Layer.WMS(
-					"OpenLayers WMS",
-					"http://labs.metacarta.com/wms/vmap0",
-					{
-						layers: 'basic',
-						format: 'image/png'
-					}
-				)
+				//new OpenLayers.Layer.WMS(
+					//"OpenLayers WMS",
+					//"http://labs.metacarta.com/wms/vmap0",
+					//{
+						//layers: 'basic',
+						//format: 'image/png'
+					//}
+				//)
+                new OpenLayers.Layer.WMS(
+                    "NASA Global Mosaic",
+                    "http://wms.latlon.org/", 
+                    {layers: "osm"}
+                )
 			],
 			center: new OpenLayers.LonLat(lon, lat)
 		});
@@ -120,6 +136,7 @@ $(function() {
 
 		window.m = map;
         getMarkers();
+        window.setInterval(getMarkers, 30000);
         return getMarkers
 	}
 	var nav = navigator.geolocation;
