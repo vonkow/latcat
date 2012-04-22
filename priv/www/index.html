@@ -57,21 +57,14 @@ $(function() {
 		markers,
 		tip = $("#tip").hide(),
 		tipText = "",
-		over = false;
+        over = false,
+        cur = 0;
 
 	function init(lat, lon) {
 		if (console) console.log("lat: "+lat+" lon: "+lon);
 		map = new OpenLayers.Map('map', {
 			zoom: 12,
 			layers: [
-				//new OpenLayers.Layer.WMS(
-					//"OpenLayers WMS",
-					//"http://labs.metacarta.com/wms/vmap0",
-					//{
-						//layers: 'basic',
-						//format: 'image/png'
-					//}
-				//)
                 new OpenLayers.Layer.WMS(
                     "NASA Global Mosaic",
                     "http://wms.latlon.org/", 
@@ -82,6 +75,13 @@ $(function() {
 		});
 		markers = new OpenLayers.Layer.Markers("Markers");
 		map.addLayer(markers);
+        //map.layers[0].events.register("touchstart", map, function(e) {
+            //tipText = "";
+            //OpenLayers.Event.stop(e);
+            //tip.stop(true, true).fadeOut();
+            //cur = 0;
+            //over = false;
+        //});
 		var size = new OpenLayers.Size(21, 25),
 			offset = new OpenLayers.Pixel(-(size.w/2), -size.h),
 			icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
@@ -110,6 +110,24 @@ $(function() {
                             over = false;
                         });
 
+                        m.events.register("touchstart", m, function(e) {
+                            if (cur == m.id) {
+                                tipText = "";
+                                tip.stop(true, true).fadeOut();
+                                over = false;
+                                cur = 0;
+                            } else {
+                                tipText = n.text;
+                                tip.stop(true, true).fadeIn();
+                                over = true;
+                                cur = m.id;
+                            }
+                        });
+                        //m.events.register("touchend", m, function(e) {
+                            //tipText = "";
+                            //tip.stop(true, true).fadeOut();
+                            //over = false;
+                        //});
                         m.events.register("dblclick", m, function(e) {
                             tipText = "";
                             tip.stop(true, true).fadeOut();
@@ -156,7 +174,6 @@ $(function() {
 			return false;
 		});
 	})
-
 })
 </script>
 </body>
