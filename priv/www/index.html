@@ -1,0 +1,127 @@
+<html>
+<head>
+<title>It Worked</title>
+<style>
+#navbar {
+	height: 2em;
+	/*position: fixed;*/
+	width: 100%;
+	background-color:black;
+	color: white;
+}
+#map {
+	margin-top: 2em;
+}
+#tip{
+	overflow: auto;
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: 300px;
+
+	position : absolute;
+	background-color : #efefef;
+	color:#333;
+	padding : 3px;
+	z-index: 1000;
+	max-width: 200px;
+}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script type="text/javascript" src="http://openlayers.org/api/OpenLayers.js"></script>
+</head>
+<body>
+<div id="navbar">
+	<form id="notify" action="/add" method="POST" style="display:inline;">
+		<input id="text" name="text" type="text">
+	</form>
+</div>
+<div id="main">
+	<div id="map"></div>
+</div>
+<div id="tip"></div>
+<script>
+$(function() {
+	var map,
+		markers,
+		tip = $("#tip").hide(),
+		tipText = "",
+		over = false;
+
+	function init(lat, lon) {
+		if (console) console.log("lat: "+lat+" lon: "+lon);
+		map = new OpenLayers.Map('map', {
+			zoom: 5,
+			layers: [
+				new OpenLayers.Layer.WMS(
+					"OpenLayers WMS",
+					"http://labs.metacarta.com/wms/vmap0",
+					{
+						layers: 'basic',
+						format: 'image/png'
+					}
+				)
+			],
+			center: new OpenLayers.LonLat(lon, lat)
+		});
+		markers = new OpenLayers.Layer.Markers("Markers");
+		map.addLayer(markers);
+		var size = new OpenLayers.Size(21, 25),
+			offset = new OpenLayers.Pixel(-(size.w/2), -size.h),
+			icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
+		$.getJSON("/search/"+lat+"/"+lon, function(data) {
+			var notes = data.notes;
+			markers.addMarker(new OpenLayers.Marker(new OpenLayers.LonLat(0, 0), icon));
+			for (var x = 0, len = notes.length; x < len; x++) {
+				(function() {
+					var n = notes[x],
+						m = new OpenLayers.Marker(new OpenLayers.LonLat(n.lon, n.lat), icon.clone());
+					m.events.register("mouseover", m, function(e) {
+						tipText = n.text;
+						OpenLayers.Event.stop(e);
+						tip.stop(true, true).fadeIn();
+						over = true;
+					});
+					m.events.register("mouseout", m, function(e) {
+						tipText = "";
+						tip.stop(true, true).fadeOut();
+						over = false;
+					});
+					markers.addMarker(m);
+				})();
+			}
+		});
+
+        $("#map").mousemove(function(e){
+			e = e || window.event;
+			if (over){
+				o = $(this).offset();
+				tip.css("left", (e.pageX-o.left)-100).css("top", (e.pageY-o.top)+20);
+				tip.html(tipText);
+			}
+		});
+
+
+		window.m = map;
+	}
+	var nav = navigator.geolocation;
+	nav.getCurrentPosition(function(pos) {
+		var lat = pos.coords.latitude,
+			lon = pos.coords.longitude;
+		init(lat, lon);
+		$('#notify').submit(function() {
+			$.post("/add", {
+				id: Math.random(),
+				user: Math.random(),
+				lat: lat,
+				lon: lon,
+				text: $('#text').val()
+			});
+			return false;
+		});
+	})
+
+})
+</script>
+</body>
+</html>

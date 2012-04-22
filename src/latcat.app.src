@@ -1,0 +1,9 @@
+%% -*- erlang -*-
+{application, latcat,
+ [{description, "latcat"},
+  {vsn, "0.1"},
+  {modules, []},
+  {registered, []},
+  {mod, {'latcat_app', []}},
+  {env, []},
+  {applications, [kernel, stdlib, crypto]}]}.
