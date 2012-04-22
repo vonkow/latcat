@@ -4,25 +4,33 @@
 
 -include_lib("stdlib/include/qlc.hrl").
 
--record(counter, {val}).
--record(note, {id, user, timestamp=httpd_util:rfc1123_date(), lat, lon, text}).
+-include("latcat.hrl").
 
 init() ->
 	% Add case lists:member(note, mnesia:tables([node()]) of [] -> add; _ -> dont end.
-	mnesia:create_table(note, [{attributes, record_info(fields, note)}]).
+	mnesia:create_table(count, [{attributes, record_info(fields, count)}]),
+	mnesia:create_table(note, [{attributes, record_info(fields, note)}]),
+    F = fun() ->
+            mnesia:write(#count{key=note, val=0})
+    end, mnesia:transaction(F).
 
-add(Id, User, Lat, Lon, Text) ->
+add(Lat, Lon, Text) ->
 	F = fun() ->
-			R = #note{id=Id, user=User, lat=Lat, lon=Lon, text=Text},
+            [C|_] = mnesia:read(count, note),
+            NewCount = C#count.val+1,
+            ok = mnesia:write(C#count{val=NewCount}),
+			R = #note{id=NewCount, lat=Lat, lon=Lon, text=Text},
 			mnesia:write(R)
-	end,
-	mnesia:transaction(F).
+	end, mnesia:transaction(F).
 
-box(X, Y) ->
-	box(X, Y, 1).
+delete(Id) ->
+    F = fun() ->
+            mnesia:delete({note, Id})
+    end, mnesia:transaction(F).
 
-box(X, Y, R) ->
-	box(X-R, Y-R, X+R, Y+R).
+box(X, Y) -> box(X, Y, 1).
+
+box(X, Y, R) -> box(X-R, Y-R, X+R, Y+R).
 
 box(X1, Y1, X2, Y2) ->
 	F = fun() ->
@@ -32,14 +40,12 @@ box(X1, Y1, X2, Y2) ->
 								 N#note.lon >= Y1,
 								 N#note.lon =< Y2]),
 			qlc:e(Q)
-	end,
-	{atomic, R} = mnesia:transaction(F),
+	end, {atomic, R} = mnesia:transaction(F),
 	R.
 
 json(X, Y) ->
 	F = fun(R) ->
 			{struct, [{"id", R#note.id},
-					  {"user", R#note.user},
 					  {"timestamp", list_to_binary(R#note.timestamp)},
 					  {"lat", R#note.lat},
 					  {"lon", R#note.lon},

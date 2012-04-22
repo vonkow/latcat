@@ -69,46 +69,64 @@ $(function() {
 		var size = new OpenLayers.Size(21, 25),
 			offset = new OpenLayers.Pixel(-(size.w/2), -size.h),
 			icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
-		$.getJSON("/search/"+lat+"/"+lon, function(data) {
-			var notes = data.notes;
-			markers.addMarker(new OpenLayers.Marker(new OpenLayers.LonLat(0, 0), icon));
-			for (var x = 0, len = notes.length; x < len; x++) {
-				(function() {
-					var n = notes[x],
-						m = new OpenLayers.Marker(new OpenLayers.LonLat(n.lon, n.lat), icon.clone());
-					m.events.register("mouseover", m, function(e) {
-						tipText = n.text;
-						OpenLayers.Event.stop(e);
-						tip.stop(true, true).fadeIn();
-						over = true;
-					});
-					m.events.register("mouseout", m, function(e) {
-						tipText = "";
-						tip.stop(true, true).fadeOut();
-						over = false;
-					});
-					markers.addMarker(m);
-				})();
-			}
-		});
+        function getMarkers() {
+            $.getJSON("/search/"+lat+"/"+lon, function(data) {
+                var notes = data.notes;
+                while (markers.markers.length) {
+                    markers.removeMarker(markers.markers[0]);
+                }
+                markers.addMarker(new OpenLayers.Marker(new OpenLayers.LonLat(0, 0), icon));
+                for (var x = 0, len = notes.length; x < len; x++) {
+                    (function() {
+                        var n = notes[x],
+                            m = new OpenLayers.Marker(new OpenLayers.LonLat(n.lon, n.lat), icon.clone());
+                        m.id = n.id;
+                        console.log(m);
+                        m.events.register("mouseover", m, function(e) {
+                            tipText = n.text;
+                            OpenLayers.Event.stop(e);
+                            tip.stop(true, true).fadeIn();
+                            over = true;
+                        });
+                        m.events.register("mouseout", m, function(e) {
+                            tipText = "";
+                            tip.stop(true, true).fadeOut();
+                            over = false;
+                        });
+
+                        m.events.register("dblclick", m, function(e) {
+                            tipText = "";
+                            tip.stop(true, true).fadeOut();
+                            over = false;
+                            $.post("/delete", {id: m.id}, function() {
+                                getMarkers();
+                            });
+                        });
+                        markers.addMarker(m);
+                    })();
+                }
+                markers.redraw();
+            });
+        };
 
         $("#map").mousemove(function(e){
 			e = e || window.event;
 			if (over){
 				o = $(this).offset();
-				tip.css("left", (e.pageX-o.left)-100).css("top", (e.pageY-o.top)+20);
+				tip.css("left", (e.pageX-o.left)-100).css("top", (e.pageY-o.top)+10);
 				tip.html(tipText);
 			}
 		});
 
-
 		window.m = map;
+        getMarkers();
+        return getMarkers
 	}
 	var nav = navigator.geolocation;
 	nav.getCurrentPosition(function(pos) {
 		var lat = pos.coords.latitude,
 			lon = pos.coords.longitude;
-		init(lat, lon);
+		getMarkers = init(lat, lon);
 		$('#notify').submit(function() {
 			$.post("/add", {
 				id: Math.random(),
@@ -117,6 +135,7 @@ $(function() {
 				lon: lon,
 				text: $('#text').val()
 			});
+            getMarkers();
 			return false;
 		});
 	})

@@ -11,6 +11,7 @@
 %% External API
 
 start(Options) ->
+    latcat_db:init(),
     {DocRoot, Options1} = get_option(docroot, Options),
     Loop = fun (Req) ->
                    ?MODULE:loop(Req, DocRoot)
@@ -34,14 +35,15 @@ loop(Req, DocRoot) ->
                         Req:serve_file(Path, DocRoot)
                 end;
             'POST' ->
+                Data = Req:parse_post(),
                 case Path of
 					"add" ->
-						Data = Req:parse_post(),
 						latcat_logic:add_post(Data),
 						Req:respond({200, [], [<<"OK\n">>]});
-
+                    "delete" ->
+                        latcat_logic:delete_note(Data),
+                        Req:respond({200, [], [<<"OK\n">>]});
                     _ ->
-						
                         Req:not_found()
                 end;
             _ ->
