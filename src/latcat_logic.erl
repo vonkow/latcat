@@ -24,8 +24,10 @@ search(LatL, LonL) ->
 add_post(Note) ->
 	Lat = ?List2Num(?TAKE("lat", Note)),
 	Lon = ?List2Num(?TAKE("lon", Note)),
-	Text = ?TAKE("text", Note),
-	latcat_db:add(Lat, Lon, Text).
+    Text = ?TAKE("text", Note),
+    Text1 = re:replace(Text, "<", "\\&lt;", [{return, list}, global]),
+    Text2 = re:replace(Text1, ">", "\\&gt;", [{return, list}, global]),
+	latcat_db:add(Lat, Lon, Text2).
 
 delete_note(Data) ->
 	Id = ?List2Num(?TAKE("id", Data)),
