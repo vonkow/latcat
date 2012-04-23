@@ -147,7 +147,7 @@ $(function() {
 			e = e || window.event;
 			if (over){
 				o = $(this).offset();
-				tip.css("left", (e.pageX-o.left)-100).css("top", (e.pageY-o.top)+10);
+				tip.css("left", (e.pageX-o.left)-100).css("top", (e.pageY+o.top)-20);
 				tip.html(tipText);
 			}
 		});
