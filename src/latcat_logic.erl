@@ -7,10 +7,15 @@
 -define(TAKE(K, L), proplists:get_value(K, L)).
 -define(List2Num(L), try list_to_float(L) catch _:_ -> list_to_integer(L) end).
 
-search(LatL, LonL) ->
-	Lat = ?List2Num(LatL),
-	Lon = ?List2Num(LonL),
-	Notes = latcat_db:box(Lat, Lon),
+search({box, BoxList}) ->
+    Box = lists:map(fun(Extent) ->
+            ?List2Num(Extent)
+    end, BoxList),
+	%Lat1 = ?List2Num(TopL),
+	%Lon1 = ?List2Num(Lon1L),
+	%Lat2 = ?List2Num(Lat2L),
+	%Lon2 = ?List2Num(Lon2L),
+	Notes = latcat_db:box(Box),
 	F = fun(R) ->
 			{struct, [{"id", R#note.id},
 					  {"timestamp", list_to_binary(R#note.timestamp)},

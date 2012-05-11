@@ -61,7 +61,6 @@ $(function() {
         cur = 0;
 
 	function init(lat, lon) {
-		if (console) console.log("lat: "+lat+" lon: "+lon);
 		map = new OpenLayers.Map('map', {
 			zoom: 12,
 			layers: [
@@ -86,7 +85,8 @@ $(function() {
 			offset = new OpenLayers.Pixel(-(size.w/2), -size.h),
 			icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
         function getMarkers() {
-            $.getJSON("/search/"+lat+"/"+lon, function(data) {
+            var extent = map.getExtent();
+            $.getJSON("/search/box/"+extent.top+"/"+extent.left+"/"+extent.bottom+"/"+extent.right, function(data) {
                 var notes = data.notes;
                 while (markers.markers.length) {
                     markers.removeMarker(markers.markers[0]);
@@ -97,7 +97,6 @@ $(function() {
                         var n = notes[x],
                             m = new OpenLayers.Marker(new OpenLayers.LonLat(n.lon, n.lat), icon.clone());
                         m.id = n.id;
-                        console.log(m);
                         m.events.register("mouseover", m, function(e) {
                             tipText = n.text;
                             OpenLayers.Event.stop(e);

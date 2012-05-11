@@ -1,10 +1,10 @@
-%% @author Mochi Media <dev@mochimedia.com>
-%% @copyright 2010 Mochi Media <dev@mochimedia.com>
+%% @author Caz vonKow <caz@vonkow.com>
+%% @copyright 2012+ Caz vonKow <caz@vonkow.com>
 
 %% @doc Web server for latcat.
 
 -module(latcat_web).
--author("Mochi Media <dev@mochimedia.com>").
+-author("Caz vonKow <caz@vonkow.com>").
 
 -export([start/1, stop/0, loop/2]).
 
@@ -27,9 +27,9 @@ loop(Req, DocRoot) ->
         case Req:get(method) of
             Method when Method =:= 'GET'; Method =:= 'HEAD' ->
                 case Path of
-					"search/" ++ LL ->
-						[Lat, Lon] = string:tokens(LL, "/"),
-						Res = latcat_logic:search(Lat, Lon),
+					"search/box/" ++ BoxString ->
+						Box = string:tokens(BoxString, "/"), % [Top, Left, Bottom, Right] 
+						Res = latcat_logic:search({box, Box}),
 						Req:respond({200, [{"Content-Type", "application/json"}], [mochijson2:encode(Res)]});
                     _ ->
                         Req:serve_file(Path, DocRoot)

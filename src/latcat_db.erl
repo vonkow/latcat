@@ -30,15 +30,15 @@ delete(Id) ->
 
 box(X, Y) -> box(X, Y, 1).
 
-box(X, Y, R) -> box(X-R, Y-R, X+R, Y+R).
+box(X, Y, R) -> box([X-R, Y-R, X+R, Y+R]).
 
-box(X1, Y1, X2, Y2) ->
+box([Top, Left, Bottom, Right]) ->
 	F = fun() ->
 			Q = qlc:q([N || N <- mnesia:table(note),
-								 N#note.lat >= X1,
-								 N#note.lat =< X2,
-								 N#note.lon >= Y1,
-								 N#note.lon =< Y2]),
+								 N#note.lat >= Bottom,
+								 N#note.lat =< Top,
+								 N#note.lon =< Right,
+								 N#note.lon >= Left]),
 			qlc:e(Q)
 	end, {atomic, R} = mnesia:transaction(F),
 	R.
